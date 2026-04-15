@@ -5,7 +5,7 @@ kaplay({
 
 // sprites 
 
-loadSprite("bg", "assets/industrial-background.jpg")
+loadSprite("bg", "assets/bluebg.png")
 loadSprite("beachbg", "assets/beachbg.PNG")
 loadSprite("treebg", "assets/butterflybg.PNG")
 loadSprite("cocoon", "assets/butterflycocoon.PNG")
@@ -123,7 +123,7 @@ scene("minigame1", () => {
 
     const box = add([
         sprite("cocoon"),
-        scale(0.3),
+        scale(0.2),
         pos(center()),
         anchor("center"),
         area(),
@@ -170,7 +170,7 @@ scene("minigame2", () => {
         go("minigamepicker")
     }
  
-    const centerX = width() / 3
+    const centerX = width() / 1.5
     const topRowY = height() * 0.5
     const bottomRowY = height() * 0.7
     const spacing = 350
@@ -285,7 +285,7 @@ scene("minigame3", () => {
     addTimerUI()
 
     add([
-        text("Grab all the food!"),
+        text("Grab all the bubbles!"),
         pos(width() / 2, 60),
         anchor("center"),
         fixed(),
@@ -345,7 +345,7 @@ scene("minigame3", () => {
     let foodLeft = foodPositions.length
 
     const foodCounter = add([
-        text(`Worms: 0 / ${foodLeft}`),
+        text(`bubbles: 0 / ${foodLeft}`),
         pos(20, 60),
         fixed(),
     ])
@@ -381,7 +381,7 @@ scene("minigame3", () => {
                 destroy(food)
                 foods[i] = null
                 foodLeft--
-                foodCounter.text = `Worms: ${foodPositions.length - foodLeft} / ${foodPositions.length}`
+                foodCounter.text = `bubbles: ${foodPositions.length - foodLeft} / ${foodPositions.length}`
                 if (foodLeft <= 0) completeGame()
             }
         })
@@ -419,9 +419,9 @@ scene("minigame4", () => {
 
     
     const platforms = [
-       
+       //ground
         { x: 0,   y: 780, w: 1000, h: 20 },
-        
+        //platforms
         { x: 50,  y: 650, w: 200,  h: 18 },
         { x: 320, y: 560, w: 200,  h: 18 },
         { x: 600, y: 470, w: 200,  h: 18 },
@@ -461,7 +461,7 @@ scene("minigame4", () => {
     let foodLeft = foodPositions.length
 
     const foodCounter = add([
-        text(`Apples: 0 / ${foodLeft}`),
+        text(`food: 0 / ${foodLeft}`),
         pos(20, 60),
         fixed(),
     ])
@@ -492,7 +492,7 @@ scene("minigame4", () => {
                 destroy(food)
                 foods[i] = null
                 foodLeft--
-                foodCounter.text = `Apples: ${foodPositions.length - foodLeft} / ${foodPositions.length}`
+                foodCounter.text = `food: ${foodPositions.length - foodLeft} / ${foodPositions.length}`
                 if (foodLeft <= 0) completeGame()
             }
         })
@@ -561,7 +561,7 @@ scene("minigame5", () => {
     ])
 
     
-    const mercury = add([
+    const mercure = add([
         pos(BAR_X, BAR_TOP),
         fixed(),
         {
@@ -647,7 +647,7 @@ scene("minigame5", () => {
 
     const btnMinus = add([
         rect(70, 70),
-        pos(cx - 80 - BAR_W, BTN_Y - 45),
+        pos(cx - 30 - BAR_W, BTN_Y - 45),
         anchor("center"),
         color(80, 120, 220),
         area(),
@@ -655,7 +655,7 @@ scene("minigame5", () => {
     ])
     add([
         text("-", { size: 40 }),
-        pos(cx - 80 - BAR_W, BTN_Y - 45),
+        pos(cx - 30 - BAR_W, BTN_Y - 45),
         anchor("center"),
         fixed(),
     ])
