@@ -13,11 +13,14 @@ loadSprite("swamp", "assets/salamanderbg.PNG")
 loadSprite("body", "assets/hermitbody.PNG")
 loadSprite("shell", "assets/shell.PNG")
 loadSprite("larvae1", "assets/ladybug_larvae1.PNG")
+loadSprite("larvae2", "assets/ladybug_larvae2.PNG")
 loadSprite("bubble", "assets/bubble.PNG")
 loadSprite("ladybugfood", "assets/ladybugfood.PNG")
 loadSprite("bluebg", "assets/bluebg.png")
 loadSprite("jellyfish1", "assets/jellyfish1.PNG")
 loadSprite("jellyfish2", "assets/jellyfish2.PNG")
+loadSprite("hermitfull", "assets/hermitfull.PNG")
+loadSprite("butterfly", "assets/butterfly.PNG")
 
 
 
@@ -133,11 +136,13 @@ function showInstructionPopup(minigameName, instructionText, onDone) {
     ])
  
     let popupStart = time()
+    let popupPauseStart = time()
     let dismissed = false
  
     function dismiss() {
         if (dismissed) return
         dismissed = true
+        gameState.startTime += time() - popupPauseStart 
         destroy(overlay)
         destroy(box)
         destroy(instrText)
@@ -245,8 +250,21 @@ scene("minigame1", () => {
     ])
 
     function completeGame() {
-        gameState.score += 1
-        go("minigamepicker")
+        box.use(sprite("butterfly"))
+        box.use(scale(0.2))
+
+        let flyTime = 0
+        const flyHandler = onUpdate (() => {
+            flyTime += dt()
+            box.pos.x += 180 * dt()
+            box.angle = Math.sin(flyTime * 8) * 12
+
+            if (box.pos.y < -100 || box.pos.x > width() + 100) {
+                flyHandler.cancel()
+                gameState.score += 1
+                go("minigamepicker")
+            }
+        })
     }
 
     box.onClick(() => {
@@ -291,10 +309,10 @@ scene("minigame2", () => {
         go("minigamepicker")
     }
  
-    const centerX = width() / 1.5
+    const centerX = width() / 2
     const topRowY = height() * 0.5
     const bottomRowY = height() * 0.7
-    const spacing = 350
+    const spacing = 300
  
     let matchCount = 0
     let selectedBody = null
@@ -372,6 +390,10 @@ scene("minigame2", () => {
                 shell.filled = true
                 matched = true
                 matchCount++
+
+                selectedBody.use(sprite("hermitfull"))
+
+                shell.hidden = true
  
                 if (matchCount === sizeConfigs.length) {
                     completeGame()
@@ -618,8 +640,21 @@ scene("minigame4", () => {
     onUpdate(() => {
         if (!gameActive) return
 
-        if (isKeyDown("left"))  player.move(-MOVE_SPEED, 0)
-        if (isKeyDown("right")) player.move(MOVE_SPEED, 0)
+        if (isKeyDown("left")) { 
+            player.move(-MOVE_SPEED, 0)
+            player.flipX = true 
+        }
+
+        if (isKeyDown("right")) { 
+            player.move(MOVE_SPEED, 0)
+            player.flipX = false 
+        }
+
+        if (!player.isGrounded()) {
+            player.use(sprite("larvae2"))
+        } else {
+            player.use(sprite("larvae1"))
+        }
 
         if (isKeyPressed("space") || isKeyPressed("up")) {
             if (player.isGrounded()) {
