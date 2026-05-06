@@ -5,13 +5,19 @@ kaplay({
 
 // sprites 
 
-loadSprite("bg", "assets/bluebg.png")
+loadSprite("bg", "assets/page1bg.PNG")
 loadSprite("beachbg", "assets/beachbg.PNG")
 loadSprite("treebg", "assets/butterflybg.PNG")
 loadSprite("cocoon", "assets/butterflycocoon.PNG")
 loadSprite("swamp", "assets/salamanderbg.PNG")
-loadSprite("body", "assets/bigcrab.PNG")
-loadSprite("shell", "assets/bigshell.PNG")
+loadSprite("body", "assets/hermitbody.PNG")
+loadSprite("shell", "assets/shell.PNG")
+loadSprite("larvae1", "assets/ladybug_larvae1.PNG")
+loadSprite("bubble", "assets/bubble.PNG")
+loadSprite("ladybugfood", "assets/ladybugfood.PNG")
+loadSprite("bluebg", "assets/bluebg.png")
+loadSprite("jellyfish1", "assets/jellyfish1.PNG")
+loadSprite("jellyfish2", "assets/jellyfish2.PNG")
 
 
 
@@ -20,6 +26,8 @@ const GAME_DURATION = 60
 let gameState = {
     score: 0,
     startTime: 0,
+    lastMinigame: null,
+    playedMinigames: new Set(),
 }
 
 function checkGameTimer() {
@@ -30,7 +38,7 @@ function checkGameTimer() {
 
 function addTimerUI() {
     const timer = add([
-        text("Time: 30"),
+        text("Temps Restant: 30"),
         pos(20, 20),
         fixed(),
     ])
@@ -40,7 +48,7 @@ function addTimerUI() {
             0,
             Math.ceil(GAME_DURATION - (time() - gameState.startTime))
         )
-        timer.text = `Time: ${timeLeft}`
+        timer.text = `Temps restant: ${timeLeft}`
     })
 }
 
@@ -53,6 +61,119 @@ function shuffleArray(arr) {
     return arr
 }
 
+// pas de repetitios
+function randomMiniGame() {
+    const available = miniGames.filter(g => g !== gameState.lastMinigame)
+    const chosen = choose(available)
+    gameState.lastMinigame = chosen
+    return chosen
+}
+ 
+// Popup 8s
+function showInstructionPopup(minigameName, instructionText, onDone) {
+    if (gameState.playedMinigames.has(minigameName)) {
+        //skip popup
+        onDone()
+        return
+    }
+    gameState.playedMinigames.add(minigameName)
+ 
+    const POPUP_DURATION = 8
+ 
+    // Dim overlay
+    const overlay = add([
+        rect(width(), height()),
+        pos(0, 0),
+        color(0, 0, 0),
+        opacity(0.6),
+        fixed(),
+        z(100),
+    ])
+ 
+    // Popup box
+    const boxW = 600
+    const boxH = 220
+    const box = add([
+        rect(boxW, boxH, { radius: 16 }),
+        pos(width() / 2, height() / 2),
+        anchor("center"),
+        color(240, 240, 240),
+        fixed(),
+        z(101),
+    ])
+ 
+    // Instruction text
+    const instrText = add([
+        text(instructionText, { size: 22, width: 540, align: "center" }),
+        pos(width() / 2, height() / 2 - 30),
+        anchor("center"),
+        color(30, 30, 30),
+        fixed(),
+        z(102),
+    ])
+ 
+    // space skip
+    const skipText = add([
+        text("Appuie sur ESPACE pour sauter cette fenêtre...", { size: 16 }),
+        pos(width() / 2, height() / 2 + 70),
+        anchor("center"),
+        color(100, 100, 100),
+        fixed(),
+        z(102),
+    ])
+ 
+    // Countdown
+    const countdownText = add([
+        text(`Commance dans ${POPUP_DURATION}secondes…`, { size: 16 }),
+        pos(width() / 2, height() / 2 + 95),
+        anchor("center"),
+        color(150, 100, 50),
+        fixed(),
+        z(102),
+    ])
+ 
+    let popupStart = time()
+    let dismissed = false
+ 
+    function dismiss() {
+        if (dismissed) return
+        dismissed = true
+        destroy(overlay)
+        destroy(box)
+        destroy(instrText)
+        destroy(skipText)
+        destroy(countdownText)
+        onDone()
+    }
+ 
+    // space skips popup
+    const skipHandler = onKeyPress("space", () => {
+        skipHandler.cancel()
+        dismiss()
+    })
+ 
+    // dismiss
+    const timerHandler = onUpdate(() => {
+        const elapsed = time() - popupStart
+        const left = Math.max(0, Math.ceil(POPUP_DURATION - elapsed))
+        countdownText.text = `Commence dans ${left}secondes…`
+        if (elapsed >= POPUP_DURATION) {
+            timerHandler.cancel()
+            skipHandler.cancel()
+            dismiss()
+        }
+    })
+}
+ 
+// mediation (à ajouter)
+const minigameInstructions = {
+    minigame1: "Le savait-tu? Les papillions doivent se libérer de leur concons pour se metamorphoser! Utilise la souris pour liberer le papillion.",
+    minigame2: "Le savait-tu? Quand les bernad-l'ermites grandissent, ils doivent changer de coquille! Utilise la souris pour amener les corps des crabes a leur coquille correspondante.",
+    minigame3: "Le savait-tu? Quand un salamndre devient adulte, ses poumons se developpe en avalant de l'air. Utilise les flèches pour attraper toute les bulles d'air! ",
+    minigame4: "Le savait-tu? Pour qu'un bébé coccinelle grandisse, il faut qu'il mange beaucoup, et très vite! Utilise toute les flèches pour attraper la nourriture.",
+    minigame5: "Le savait-tu? Pour qu'une méduse grandisse, il faut que la température de l'eau change. Utilise les boutons + et - pour arriver à la bonne température d'eau!",
+}
+
 //  title screen 
 scene("titlescreen", () => {
 
@@ -61,15 +182,12 @@ scene("titlescreen", () => {
         pos(0, 0),
     ])
 
-    add([
-        text("Metamorphosis\nPress SPACE to begin!"),
-        pos(center()),
-        anchor("center")
-    ])
 
     onKeyPress("space", () => {
         gameState.score = 0
         gameState.startTime = time()
+        gameState.lastMinigame = null
+        gameState.playedMinigames = new Set()
         go("minigamepicker")
     })
 })
@@ -82,10 +200,6 @@ const miniGames = [
     "minigame4",
     "minigame5"
 ]
-
-function randomMiniGame() {
-    return choose(miniGames)
-}
 
 scene("minigamepicker", () => {
 
@@ -114,9 +228,10 @@ scene("minigame1", () => {
     addTimerUI()
 
     let clickCount = 0
+    let gameActive = false
 
     const counterText = add([
-        text("Clicks: 0 / 10"),
+        text("Cliques: 0 / 10"),
         pos(20, 60),
         fixed(),
     ])
@@ -136,10 +251,14 @@ scene("minigame1", () => {
 
     box.onClick(() => {
         clickCount++
-        counterText.text = `Clicks: ${clickCount} / 10`
+        counterText.text = `Cliques: ${clickCount} / 10`
         if (clickCount >= 10) {
             completeGame()
         }
+    })
+
+    showInstructionPopup("minigame1", minigameInstructions["minigame1"], () => {
+        gameActive = true
     })
 
     onUpdate(() => {
@@ -159,11 +278,13 @@ scene("minigame2", () => {
     addTimerUI()
  
     add([
-        text("Match each crab to its shell!"),
+        text("Associe les bons corps au bonnes coquilles!"),
         pos(width() / 2, height() * 0.10),
         anchor("center"),
         fixed(),
     ])
+
+    let gameActive = false 
  
     function completeGame() {
         gameState.score += 1
@@ -222,6 +343,7 @@ scene("minigame2", () => {
     })
  
     onMousePress(() => {
+        if (!gameActive) return
         for (let i = bodies.length - 1; i >= 0; i--) {
             const body = bodies[i]
             if (body.isHovering() && !body.placed) {
@@ -263,8 +385,13 @@ scene("minigame2", () => {
  
         selectedBody = null
     })
+
+    showInstructionPopup("minigame2", minigameInstructions["minigame2"], () => {
+        gameActive = true
+    })
  
     onUpdate(() => {
+        if (!gameActive) return
         if (selectedBody && selectedBody.dragging && !selectedBody.placed) {
             selectedBody.pos = mousePos().sub(selectedBody.offset)
         }
@@ -285,11 +412,13 @@ scene("minigame3", () => {
     addTimerUI()
 
     add([
-        text("Grab all the bubbles!"),
+        text("Attrape toute les bulles!"),
         pos(width() / 2, 60),
         anchor("center"),
         fixed(),
     ])
+
+    let gameActive = false
 
     function completeGame() {
         gameState.score += 1
@@ -345,16 +474,15 @@ scene("minigame3", () => {
     let foodLeft = foodPositions.length
 
     const foodCounter = add([
-        text(`bubbles: 0 / ${foodLeft}`),
+        text(`bulles: 0 / ${foodLeft}`),
         pos(20, 60),
         fixed(),
     ])
 
     const foods = foodPositions.map(fp => {
         return add([
-            
-            rect(28, 28),
-            color(180, 100, 20),
+            sprite("bubble"),
+            scale(0.1),
             pos(fp.x, fp.y),
             anchor("center"),
             area(),
@@ -362,8 +490,12 @@ scene("minigame3", () => {
         ])
     })
 
-    
+    showInstructionPopup("minigame3", minigameInstructions["minigame3"], () => {
+        gameActive = true
+    })
+
     onUpdate(() => {
+        if (!gameActive) return
         
         if (isKeyDown("left"))  player.move(-MOVE_SPEED, 0)
         if (isKeyDown("right")) player.move(MOVE_SPEED, 0)
@@ -395,18 +527,20 @@ scene("minigame4", () => {
 
     // background 
     add([
-        sprite("bg"),   
+        sprite("bluebg"),   
         pos(0, 0),
     ])
 
     addTimerUI()
 
     add([
-        text("Grab all the food!"),
+        text("Attrape toute la nourriture!"),
         pos(width() / 2, 60),
         anchor("center"),
         fixed(),
     ])
+
+    let gameActive = false
 
     function completeGame() {
         gameState.score += 1
@@ -441,8 +575,8 @@ scene("minigame4", () => {
 
     
     const player = add([
-        rect(44, 44),
-        color(255, 150, 160),
+        sprite("larvae1"),
+        scale(0.1),        
         pos(80, 640),
         anchor("center"),
         area(),
@@ -461,15 +595,15 @@ scene("minigame4", () => {
     let foodLeft = foodPositions.length
 
     const foodCounter = add([
-        text(`food: 0 / ${foodLeft}`),
+        text(`nourriture: 0 / ${foodLeft}`),
         pos(20, 60),
         fixed(),
     ])
 
     const foods = foodPositions.map(fp => {
         return add([
-            circle(16),
-            color(220, 40, 40),
+            sprite("ladybugfood"),
+            scale(0.1),        
             pos(fp.x, fp.y),
             anchor("center"),
             area(),
@@ -477,7 +611,13 @@ scene("minigame4", () => {
         ])
     })
 
+    showInstructionPopup("minigame4", minigameInstructions["minigame4"], () => {
+        gameActive = true
+    })
+
     onUpdate(() => {
+        if (!gameActive) return
+
         if (isKeyDown("left"))  player.move(-MOVE_SPEED, 0)
         if (isKeyDown("right")) player.move(MOVE_SPEED, 0)
 
@@ -506,11 +646,13 @@ scene("minigame5", () => {
 
     // background 
     add([
-        sprite("bg"),   
+        sprite("bluebg"),   
         pos(0, 0),
     ])
 
     addTimerUI()
+
+    let gameActive = false
 
     function completeGame() {
         gameState.score += 1
@@ -541,7 +683,7 @@ scene("minigame5", () => {
 
     
     add([
-        text(`Reach ${target}°C!`),
+        text(`Arrive à ${target}°C!`),
         pos(cx, 90),
         anchor("center"),
         fixed(),
@@ -660,7 +802,51 @@ scene("minigame5", () => {
         fixed(),
     ])
 
+    const JELLY_SCALE = 0.12   
+    const JELLY_BOB   = 18     
+    const JELLY_SPEED = 1.2    
+ 
     
+    const jellyLeft = [
+        { baseY: BAR_TOP + 80,  phase: 0    },
+        { baseY: BAR_TOP + 260, phase: 1.5  },
+        { baseY: BAR_TOP + 440, phase: 0.8  },
+    ]
+    
+    const jellyRight = [
+        { baseY: BAR_TOP + 160, phase: 1.0  },
+        { baseY: BAR_TOP + 340, phase: 0.3  },
+        { baseY: BAR_TOP + 500, phase: 1.8  },
+    ]
+ 
+    const LEFT_X  = BAR_X - 130
+    const RIGHT_X = BAR_X + BAR_W + 130
+ 
+    function makeJellyfish(x, baseY, phase) {
+        const j1 = add([
+            sprite("jellyfish1"),
+            pos(x, baseY),
+            anchor("center"),
+            scale(JELLY_SCALE),
+            fixed(),
+            z(1),
+        ])
+        const j2 = add([
+            sprite("jellyfish2"),
+            pos(x, baseY),
+            anchor("center"),
+            scale(JELLY_SCALE),
+            fixed(),
+            z(1),
+        ])
+        j2.hidden = true
+        return { j1, j2, baseY, phase, frameTimer: 0, showingFirst: true }
+    }
+ 
+    const jellies = []
+    jellyLeft.forEach(cfg  => jellies.push(makeJellyfish(LEFT_X,  cfg.baseY, cfg.phase)))
+    jellyRight.forEach(cfg => jellies.push(makeJellyfish(RIGHT_X, cfg.baseY, cfg.phase)))
+
     btnPlus.onClick(() => {
         if (time() - lastChange < CLICK_COOLDOWN) return
         current = Math.min(MAX_TEMP, current + 1)
@@ -677,7 +863,28 @@ scene("minigame5", () => {
     onKeyPress("up",   () => { current = Math.min(MAX_TEMP, current + 1) })
     onKeyPress("down", () => { current = Math.max(MIN_TEMP, current - 1) })
 
+    showInstructionPopup("minigame5", minigameInstructions["minigame5"], () => {
+        gameActive = true
+    })
+
     onUpdate(() => {
+        
+        jellies.forEach(jelly => {
+            const bobY = jelly.baseY + Math.sin(time() * JELLY_SPEED + jelly.phase) * JELLY_BOB
+            jelly.j1.pos.y = bobY
+            jelly.j2.pos.y = bobY
+
+            jelly.frameTimer += dt()
+            if (jelly.frameTimer >= 0.5) {
+                jelly.frameTimer = 0
+                jelly.showingFirst = !jelly.showingFirst
+                jelly.j1.hidden = !jelly.showingFirst
+                jelly.j2.hidden =  jelly.showingFirst
+            }
+        })
+ 
+        if (!gameActive) return
+
         const diff = Math.abs(current - target)
         const inRange = diff <= TOLERANCE
 
@@ -686,10 +893,10 @@ scene("minigame5", () => {
 
         if (inRange) {
             holdTimer += dt()
-            feedbackLabel.text = `Hold it! (${(HOLD_TIME - holdTimer).toFixed(1)}s)`
+            feedbackLabel.text = `Reste-là! (${(HOLD_TIME - holdTimer).toFixed(1)}s)`
         } else {
             holdTimer = 0
-            feedbackLabel.text = diff <= 10 ? "Getting close…" : current < target ? "Too cold! ▲" : "Too hot! ▼"
+            feedbackLabel.text = diff <= 10 ? "Tu t'y approche…" : current < target ? "Trop froid! ▲" : "Trop chaud! ▼"
         }
 
         // progress bar
@@ -707,12 +914,12 @@ scene("minigame5", () => {
 scene("gameover", () => {
 
     add([
-        sprite("bg"),
+        sprite("bluebg"),
         pos(0, 0),
     ])
 
     add([
-        text(`The end!\nScore: ${gameState.score}\nPress SPACE to go back to the title.`),
+        text(`Fin!\nScore: ${gameState.score}\nAppuie sur ESPACE pour\nrevenir à la page de titre.`),
         pos(center()),
         anchor("center")
     ])
