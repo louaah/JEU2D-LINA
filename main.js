@@ -21,6 +21,8 @@ loadSprite("jellyfish1", "assets/jellyfish1.PNG")
 loadSprite("jellyfish2", "assets/jellyfish2.PNG")
 loadSprite("hermitfull", "assets/hermitfull.PNG")
 loadSprite("butterfly", "assets/butterfly.PNG")
+loadSprite("underthesea", "assets/undertheseabg.PNG")
+loadSprite("plain bg", "assets/plainbg.png")
 
 
 
@@ -81,7 +83,7 @@ function showInstructionPopup(minigameName, instructionText, onDone) {
     }
     gameState.playedMinigames.add(minigameName)
  
-    const POPUP_DURATION = 8
+    const POPUP_DURATION = 12
  
     // Dim overlay
     const overlay = add([
@@ -681,8 +683,9 @@ scene("minigame5", () => {
 
     // background 
     add([
-        sprite("bluebg"),   
+        sprite("underthesea"),   
         pos(0, 0),
+        scale(2)
     ])
 
     addTimerUI()
@@ -949,7 +952,7 @@ scene("minigame5", () => {
 scene("gameover", () => {
 
     add([
-        sprite("bluebg"),
+        sprite("plainbg"),
         pos(0, 0),
     ])
 
