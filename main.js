@@ -6,8 +6,8 @@ kaplay({
 // sprites 
 
 loadSprite("bg", "assets/page1bg.PNG")
-loadSprite("beachbg", "assets/beachbg.PNG")
-loadSprite("treebg", "assets/butterflybg.PNG")
+loadSprite("beachbg", "assets/beachbg.png")
+loadSprite("treebg", "assets/treebg.PNG")
 loadSprite("cocoon", "assets/butterflycocoon.PNG")
 loadSprite("swamp", "assets/salamanderbg.PNG")
 loadSprite("body", "assets/hermitbody.PNG")
@@ -22,7 +22,11 @@ loadSprite("jellyfish2", "assets/jellyfish2.PNG")
 loadSprite("hermitfull", "assets/hermitfull.PNG")
 loadSprite("butterfly", "assets/butterfly.PNG")
 loadSprite("underthesea", "assets/undertheseabg.PNG")
-loadSprite("plain bg", "assets/plainbg.png")
+loadSprite("plainbg", "assets/plainbg.png")
+loadSprite("ladybugbg", "assets/ladybugbg.png")
+loadSprite("underwaterbg", "assets/underwater.png")
+loadSprite("swampbg", "assets/underwaterswamp.png")
+
 
 
 
@@ -220,6 +224,10 @@ scene("minigamepicker", () => {
         return
     }
 
+    onUpdate(() => {
+        checkGameTimer()
+    })
+
     go(randomMiniGame())
 })
 
@@ -229,7 +237,7 @@ scene("minigame1", () => {
     add([
         sprite("treebg"),
         pos(0, 0),
-        scale(0.23)
+        scale(1.5)
     ])
 
     addTimerUI()
@@ -241,6 +249,7 @@ scene("minigame1", () => {
         text("Cliques: 0 / 10"),
         pos(20, 60),
         fixed(),
+        scale(0.8)
     ])
 
     const box = add([
@@ -292,7 +301,7 @@ scene("minigame2", () => {
     add([
         sprite("beachbg"),
         pos(0, 0),
-        scale(0.23)
+        scale(1)
     ])
  
     addTimerUI()
@@ -302,6 +311,7 @@ scene("minigame2", () => {
         pos(width() / 2, height() * 0.10),
         anchor("center"),
         fixed(),
+        scale(0.8)
     ])
 
     let gameActive = false 
@@ -428,9 +438,9 @@ scene("minigame3", () => {
 
     // background 
     add([
-        sprite("swamp"),   
+        sprite("swampbg"),   
         pos(0, 0),
-        scale(0.23)
+        scale(2.8)
     ])
 
     addTimerUI()
@@ -440,6 +450,7 @@ scene("minigame3", () => {
         pos(width() / 2, 60),
         anchor("center"),
         fixed(),
+        scale(0.8)
     ])
 
     let gameActive = false
@@ -501,12 +512,13 @@ scene("minigame3", () => {
         text(`bulles: 0 / ${foodLeft}`),
         pos(20, 60),
         fixed(),
+        scale(0.8)
     ])
 
     const foods = foodPositions.map(fp => {
         return add([
             sprite("bubble"),
-            scale(0.1),
+            scale(0.3),
             pos(fp.x, fp.y),
             anchor("center"),
             area(),
@@ -551,8 +563,9 @@ scene("minigame4", () => {
 
     // background 
     add([
-        sprite("bluebg"),   
+        sprite("ladybugbg"),   
         pos(0, 0),
+        scale(2)
     ])
 
     addTimerUI()
@@ -562,6 +575,7 @@ scene("minigame4", () => {
         pos(width() / 2, 60),
         anchor("center"),
         fixed(),
+        scale(0.8)
     ])
 
     let gameActive = false
@@ -622,6 +636,7 @@ scene("minigame4", () => {
         text(`nourriture: 0 / ${foodLeft}`),
         pos(20, 60),
         fixed(),
+        scale(0.8)
     ])
 
     const foods = foodPositions.map(fp => {
@@ -683,9 +698,9 @@ scene("minigame5", () => {
 
     // background 
     add([
-        sprite("underthesea"),   
+        sprite("underwaterbg"),   
         pos(0, 0),
-        scale(2)
+        scale(2.1)
     ])
 
     addTimerUI()
@@ -725,6 +740,7 @@ scene("minigame5", () => {
         pos(cx, 90),
         anchor("center"),
         fixed(),
+        scale(0.8)
     ])
 
     
@@ -959,7 +975,8 @@ scene("gameover", () => {
     add([
         text(`Fin!\nScore: ${gameState.score}\nAppuie sur ESPACE pour\nrevenir à la page de titre.`),
         pos(center()),
-        anchor("center")
+        anchor("center"),
+        scale(0.8)
     ])
 
     onKeyPress("space", () => {
