@@ -5,9 +5,9 @@ kaplay({
 
 // sprites 
 
-loadSprite("bg", "assets/page1bg.PNG")
+loadSprite("bg", "assets/page1bg.png")
 loadSprite("beachbg", "assets/beachbg.png")
-loadSprite("treebg", "assets/treebg.PNG")
+loadSprite("treebg", "assets/treebg.png")
 loadSprite("cocoon", "assets/butterflycocoon.PNG")
 loadSprite("swamp", "assets/salamanderbg.PNG")
 loadSprite("body", "assets/hermitbody.PNG")
@@ -26,6 +26,7 @@ loadSprite("plainbg", "assets/plainbg.png")
 loadSprite("ladybugbg", "assets/ladybugbg.png")
 loadSprite("underwaterbg", "assets/underwater.png")
 loadSprite("swampbg", "assets/underwaterswamp.png")
+loadSprite("salamander", "assets/salamander.png")
 
 
 
@@ -37,9 +38,11 @@ let gameState = {
     startTime: 0,
     lastMinigame: null,
     playedMinigames: new Set(),
+    paused: false,
 }
 
 function checkGameTimer() {
+    if (gameState.paused) return
     if (time() - gameState.startTime >= GAME_DURATION) {
         go("gameover")
     }
@@ -53,6 +56,7 @@ function addTimerUI() {
     ])
 
     onUpdate(() => {
+        if (gameState.paused) return
         const timeLeft = Math.max(
             0,
             Math.ceil(GAME_DURATION - (time() - gameState.startTime))
@@ -81,11 +85,12 @@ function randomMiniGame() {
 // Popup 8s
 function showInstructionPopup(minigameName, instructionText, onDone) {
     if (gameState.playedMinigames.has(minigameName)) {
-        //skip popup
         onDone()
         return
     }
     gameState.playedMinigames.add(minigameName)
+
+    gameState.paused = true
  
     const POPUP_DURATION = 12
  
@@ -148,7 +153,7 @@ function showInstructionPopup(minigameName, instructionText, onDone) {
     function dismiss() {
         if (dismissed) return
         dismissed = true
-        gameState.startTime += time() - popupPauseStart 
+        gameState.paused = false 
         destroy(overlay)
         destroy(box)
         destroy(instrText)
@@ -178,11 +183,11 @@ function showInstructionPopup(minigameName, instructionText, onDone) {
  
 // mediation (à ajouter)
 const minigameInstructions = {
-    minigame1: "Le savait-tu? Les papillions doivent se libérer de leur concons pour se metamorphoser! Utilise la souris pour liberer le papillion.",
-    minigame2: "Le savait-tu? Quand les bernad-l'ermites grandissent, ils doivent changer de coquille! Utilise la souris pour amener les corps des crabes a leur coquille correspondante.",
-    minigame3: "Le savait-tu? Quand un salamndre devient adulte, ses poumons se developpe en avalant de l'air. Utilise les flèches pour attraper toute les bulles d'air! ",
-    minigame4: "Le savait-tu? Pour qu'un bébé coccinelle grandisse, il faut qu'il mange beaucoup, et très vite! Utilise toute les flèches pour attraper la nourriture.",
-    minigame5: "Le savait-tu? Pour qu'une méduse grandisse, il faut que la température de l'eau change. Utilise les boutons + et - pour arriver à la bonne température d'eau!",
+    minigame1: "Le savais-tu ? Les papillons doivent se libérer de leurs cocons pour se métamorphoser ! Clique sur le cocon pour libérer le papillon.",
+    minigame2: "Le savais-tu ? Quand les bernard-l'hermites grandissent, ils doivent changer de coquille ! Utilise la souris pour amener les corps des crabes à leur coquille correspondante.",
+    minigame3: "Le savais-tu ? Quand une salamandre devient adulte, ses poumons se développent en avalant de l'air. Utilise les flèches et la touche espace pour attraper toutes les bulles d'air !",
+    minigame4: "Le savais-tu ? Pour qu'un bébé coccinelle grandisse, il faut qu'il mange beaucoup, et très vite ! Utilise toute les flèches et la touche espace pour attraper la nourriture.",
+    minigame5: "Le savais-tu ? Pour qu'une méduse grandisse, il faut que la température de l'eau change. Clique sur les boutons + et - pour arriver à la bonne température d'eau !",
 }
 
 //  title screen 
@@ -237,7 +242,7 @@ scene("minigame1", () => {
     add([
         sprite("treebg"),
         pos(0, 0),
-        scale(1.5)
+        scale(1)
     ])
 
     addTimerUI()
@@ -254,7 +259,7 @@ scene("minigame1", () => {
 
     const box = add([
         sprite("cocoon"),
-        scale(0.2),
+        scale(0.5),
         pos(center()),
         anchor("center"),
         area(),
@@ -306,13 +311,13 @@ scene("minigame2", () => {
  
     addTimerUI()
  
-    add([
-        text("Associe les bons corps au bonnes coquilles!"),
-        pos(width() / 2, height() * 0.10),
-        anchor("center"),
-        fixed(),
-        scale(0.8)
-    ])
+    //add([
+    //    text("Associe les bons corps aux bonnes coquilles!"),
+    //    pos(width() / 2, height() * 0.10),
+    //    anchor("center"),
+    //    fixed(),
+    //    scale(0.8)
+    //])
 
     let gameActive = false 
  
@@ -440,18 +445,18 @@ scene("minigame3", () => {
     add([
         sprite("swampbg"),   
         pos(0, 0),
-        scale(2.8)
+        scale(1)
     ])
 
     addTimerUI()
 
-    add([
-        text("Attrape toute les bulles!"),
-        pos(width() / 2, 60),
-        anchor("center"),
-        fixed(),
-        scale(0.8)
-    ])
+    //add([
+    //    text("Attrape toutes les bulles!"),
+    //    pos(width() / 2, 60),
+    //    anchor("center"),
+    //    fixed(),
+    //    scale(0.8)
+    //])
 
     let gameActive = false
 
@@ -468,9 +473,9 @@ scene("minigame3", () => {
     
     const platforms = [
         // ground
-        { x: 0,   y: 690, w: 1000, h: 20 },
+        { x: 0,   y: 760, w: 1000, h: 20 },
         // floating platforms
-        { x: 100, y: 620, w: 220,  h: 18 },
+        { x: 200, y: 620, w: 220,  h: 18 },
         { x: 420, y: 520, w: 220,  h: 18 },
         { x: 700, y: 400, w: 220,  h: 18 },
         { x: 200, y: 310, w: 180,  h: 18 },
@@ -489,8 +494,8 @@ scene("minigame3", () => {
 
     
     const player = add([
-        rect(40, 40),
-        color(255, 200, 50),
+        sprite("salamander"),
+        scale(0.12),
         pos(80, 640),
         anchor("center"),
         area(),
@@ -499,11 +504,11 @@ scene("minigame3", () => {
 
    
     const foodPositions = [
-        { x: 200, y: 595 },
-        { x: 530, y: 495 },
-        { x: 810, y: 375 },
-        { x: 280, y: 285 },
-        { x: 675, y: 215 },
+        { x: 300, y: 585 },
+        { x: 530, y: 485 },
+        { x: 810, y: 365 },
+        { x: 280, y: 275 },
+        { x: 675, y: 205 },
     ]
 
     let foodLeft = foodPositions.length
@@ -565,18 +570,18 @@ scene("minigame4", () => {
     add([
         sprite("ladybugbg"),   
         pos(0, 0),
-        scale(2)
+        scale(1)
     ])
 
     addTimerUI()
 
-    add([
-        text("Attrape toute la nourriture!"),
-        pos(width() / 2, 60),
-        anchor("center"),
-        fixed(),
-        scale(0.8)
-    ])
+    // add([
+    //    text("Attrape toute la nourriture!"),
+    //    pos(width() / 2, 60),
+    //    anchor("center"),
+    //    fixed(),
+    //   scale(0.8)
+    //])
 
     let gameActive = false
 
@@ -594,11 +599,11 @@ scene("minigame4", () => {
        //ground
         { x: 0,   y: 780, w: 1000, h: 20 },
         //platforms
-        { x: 50,  y: 650, w: 200,  h: 18 },
-        { x: 320, y: 560, w: 200,  h: 18 },
-        { x: 600, y: 470, w: 200,  h: 18 },
-        { x: 350, y: 360, w: 280,  h: 18 },
-        { x: 100, y: 470, w: 160,  h: 18 },
+        { x: 50,  y: 300, w: 200,  h: 18 },
+        { x: 320, y: 650, w: 200,  h: 18 },
+        { x: 600, y: 560, w: 200,  h: 18 },
+        { x: 350, y: 450, w: 280,  h: 18 },
+        { x: 100, y: 560, w: 160,  h: 18 },
     ]
 
     platforms.forEach(p => {
@@ -623,11 +628,11 @@ scene("minigame4", () => {
 
     
     const foodPositions = [
-        { x: 140,  y: 625 },
-        { x: 415,  y: 535 },
-        { x: 695,  y: 445 },
-        { x: 480,  y: 335 },
-        { x: 175,  y: 445 },
+        { x: 260,  y: 220 },
+        { x: 435,  y: 585 },
+        { x: 715,  y: 495 },
+        { x: 500,  y: 385 },
+        { x: 205,  y: 495 },
     ]
 
     let foodLeft = foodPositions.length
@@ -700,7 +705,7 @@ scene("minigame5", () => {
     add([
         sprite("underwaterbg"),   
         pos(0, 0),
-        scale(2.1)
+        scale(1)
     ])
 
     addTimerUI()
@@ -973,10 +978,19 @@ scene("gameover", () => {
     ])
 
     add([
-        text(`Fin!\nScore: ${gameState.score}\nAppuie sur ESPACE pour\nrevenir à la page de titre.`),
+        text(` ${gameState.score}`),
         pos(center()),
         anchor("center"),
-        scale(0.8)
+        scale(1),
+        color(183, 97, 232)
+    ])
+
+    add([
+        text(`Appuyez sur "ESPACE" pour revenir au menu`),
+        pos(500, 700),
+        anchor("center"),
+        scale(1),
+        color(183, 97, 232)
     ])
 
     onKeyPress("space", () => {
