@@ -8,7 +8,7 @@ kaplay({
 loadSprite("bg", "assets/page1bg.png")
 loadSprite("beachbg", "assets/beachbg.png")
 loadSprite("treebg", "assets/treebg.png")
-loadSprite("cocoon", "assets/butterflycocoon.PNG")
+loadSprite("cocoon", "assets/butterflycocoon.png")
 loadSprite("swamp", "assets/salamanderbg.PNG")
 loadSprite("body", "assets/hermitbody.PNG")
 loadSprite("shell", "assets/shell.PNG")
@@ -27,6 +27,7 @@ loadSprite("ladybugbg", "assets/ladybugbg.png")
 loadSprite("underwaterbg", "assets/underwater.png")
 loadSprite("swampbg", "assets/underwaterswamp.png")
 loadSprite("salamander", "assets/salamander.png")
+loadSprite("emptybg", "assets/Untitled_Artwork 35.png")
 
 
 
@@ -48,11 +49,56 @@ function checkGameTimer() {
     }
 }
 
+// Draws text with a white border by layering offset copies behind it.
+// Returns the foreground (black) text object so you can update .text on it.
+// All shadow copies share the tag outlineShadow_<tag> so you can update them too.
+function addOutlinedText(txtStr, options, position, extraComps = []) {
+    const offsets = [
+        [-2, -2], [0, -2], [2, -2],
+        [-2,  0],          [2,  0],
+        [-2,  2], [0,  2], [2,  2],
+    ]
+    const tag = "outlineShadow_" + Math.random().toString(36).slice(2)
+    offsets.forEach(([dx, dy]) => {
+        add([
+            text(txtStr, options),
+            pos(position.x + dx, position.y + dy),
+            color(255, 255, 255),
+            tag,
+            ...extraComps,
+        ])
+    })
+    const fg = add([
+        text(txtStr, options),
+        pos(position.x, position.y),
+        color(0, 0, 0),
+        ...extraComps,
+    ])
+    fg._outlineTag = tag
+    return fg
+}
+
 function addTimerUI() {
+    const shadows = []
+    const offsets = [
+        [-2, -2], [0, -2], [2, -2],
+        [-2,  0],          [2,  0],
+        [-2,  2], [0,  2], [2,  2],
+    ]
+    offsets.forEach(([dx, dy]) => {
+        shadows.push(add([
+            text("Temps restant: 60", { size: 36 }),
+            pos(20 + dx, 20 + dy),
+            fixed(),
+            color(255, 255, 255),
+            "timerShadow",
+        ]))
+    })
     const timer = add([
-        text("Temps Restant: 30"),
+        text("Temps restant: 60", { size: 36 }),
         pos(20, 20),
         fixed(),
+        color(0, 0, 0),
     ])
 
     onUpdate(() => {
@@ -61,7 +107,9 @@ function addTimerUI() {
             0,
             Math.ceil(GAME_DURATION - (time() - gameState.startTime))
         )
-        timer.text = `Temps restant: ${timeLeft}`
+        const newText = `Temps restant: ${timeLeft}`
+        timer.text = newText
+        get("timerShadow").forEach(t => t.text = newText)
     })
 }
 
@@ -82,7 +130,7 @@ function randomMiniGame() {
     return chosen
 }
  
-// Popup 8s
+// Popup — espace pour commencer, pas de minuterie
 function showInstructionPopup(minigameName, instructionText, onDone) {
     if (gameState.playedMinigames.has(minigameName)) {
         onDone()
@@ -91,9 +139,7 @@ function showInstructionPopup(minigameName, instructionText, onDone) {
     gameState.playedMinigames.add(minigameName)
 
     gameState.paused = true
- 
-    const POPUP_DURATION = 12
- 
+
     // Dim overlay
     const overlay = add([
         rect(width(), height()),
@@ -103,10 +149,10 @@ function showInstructionPopup(minigameName, instructionText, onDone) {
         fixed(),
         z(100),
     ])
- 
+
     // Popup box
     const boxW = 600
-    const boxH = 220
+    const boxH = 200
     const box = add([
         rect(boxW, boxH, { radius: 16 }),
         pos(width() / 2, height() / 2),
@@ -115,69 +161,47 @@ function showInstructionPopup(minigameName, instructionText, onDone) {
         fixed(),
         z(101),
     ])
- 
+
     // Instruction text
     const instrText = add([
         text(instructionText, { size: 22, width: 540, align: "center" }),
-        pos(width() / 2, height() / 2 - 30),
+        pos(width() / 2, height() / 2 - 20),
         anchor("center"),
         color(30, 30, 30),
         fixed(),
         z(102),
     ])
- 
-    // space skip
+
+    // Space to start
     const skipText = add([
-        text("Appuie sur ESPACE pour sauter cette fenêtre...", { size: 16 }),
-        pos(width() / 2, height() / 2 + 70),
+        text("Appuie sur ESPACE pour commencer!", { size: 16 }),
+        pos(width() / 2, height() / 2 + 75),
         anchor("center"),
         color(100, 100, 100),
         fixed(),
         z(102),
     ])
- 
-    // Countdown
-    const countdownText = add([
-        text(`Commance dans ${POPUP_DURATION}secondes…`, { size: 16 }),
-        pos(width() / 2, height() / 2 + 95),
-        anchor("center"),
-        color(150, 100, 50),
-        fixed(),
-        z(102),
-    ])
- 
-    let popupStart = time()
-    let popupPauseStart = time()
+
+    const pauseStart = time()
     let dismissed = false
- 
+
     function dismiss() {
         if (dismissed) return
         dismissed = true
-        gameState.paused = false 
+        // Shift startTime forward by however long the popup was open,
+        // so the 60s timer doesn't count popup time.
+        gameState.startTime += time() - pauseStart
+        gameState.paused = false
         destroy(overlay)
         destroy(box)
         destroy(instrText)
         destroy(skipText)
-        destroy(countdownText)
         onDone()
     }
- 
-    // space skips popup
+
     const skipHandler = onKeyPress("space", () => {
         skipHandler.cancel()
         dismiss()
-    })
- 
-    // dismiss
-    const timerHandler = onUpdate(() => {
-        const elapsed = time() - popupStart
-        const left = Math.max(0, Math.ceil(POPUP_DURATION - elapsed))
-        countdownText.text = `Commence dans ${left}secondes…`
-        if (elapsed >= POPUP_DURATION) {
-            timerHandler.cancel()
-            skipHandler.cancel()
-            dismiss()
-        }
     })
 }
  
@@ -200,6 +224,44 @@ scene("titlescreen", () => {
 
 
     onKeyPress("space", () => {
+        go("intro")
+    })
+})
+
+// intro scene — shown after clicking Play, before the game starts
+scene("intro", () => {
+
+    add([
+        sprite("emptybg"),
+        pos(0, 0),
+    ])
+
+    add([
+        text("Les animaux et les insectes \nutilisent la transformation, \ndécouvres-en plusieurs et essaye \nde faire le meilleur score aux mini jeux!", {
+            size: 30,
+            strokeColor: rgb(183, 97, 232),
+            stroke: 6,
+        }),
+        pos(width() / 2, height() / 2 - 40),
+        anchor("center"),
+        color(183, 97, 232),
+        scale(1),
+        fixed(),
+    ])
+
+    add([
+        text("Appuyez sur ENTRÉE pour commencer!", {
+            size: 24,
+            strokeColor: rgb(183, 97, 232),
+            stroke: 4,
+        }),
+        pos(width() / 2, height() / 2 + 60),
+        anchor("center"),
+        color(183, 97, 232),
+        fixed(),
+    ])
+
+    onKeyPress("enter", () => {
         gameState.score = 0
         gameState.startTime = time()
         gameState.lastMinigame = null
@@ -250,11 +312,22 @@ scene("minigame1", () => {
     let clickCount = 0
     let gameActive = false
 
+    // outlined counter text
+    const _counterOffsets = [[-2,-2],[0,-2],[2,-2],[-2,0],[2,0],[-2,2],[0,2],[2,2]]
+    _counterOffsets.forEach(([dx, dy]) => add([
+        text("Cliques: 0 / 10", { size: 28 }),
+        pos(20 + dx, 60 + dy),
+        fixed(),
+        scale(0.8),
+        color(255, 255, 255),
+        "counterShadow",
+    ]))
     const counterText = add([
-        text("Cliques: 0 / 10"),
+        text("Cliques: 0 / 10", { size: 28 }),
         pos(20, 60),
         fixed(),
-        scale(0.8)
+        scale(0.8),
+        color(0, 0, 0),
     ])
 
     const box = add([
@@ -285,7 +358,9 @@ scene("minigame1", () => {
 
     box.onClick(() => {
         clickCount++
-        counterText.text = `Cliques: ${clickCount} / 10`
+        const newCounter = `Cliques: ${clickCount} / 10`
+        counterText.text = newCounter
+        get("counterShadow").forEach(t => t.text = newCounter)
         if (clickCount >= 10) {
             completeGame()
         }
@@ -513,11 +588,21 @@ scene("minigame3", () => {
 
     let foodLeft = foodPositions.length
 
+    const _bubbleOffsets = [[-2,-2],[0,-2],[2,-2],[-2,0],[2,0],[-2,2],[0,2],[2,2]]
+    _bubbleOffsets.forEach(([dx, dy]) => add([
+        text(`bulles: 0 / ${foodLeft}`),
+        pos(20 + dx, 60 + dy),
+        fixed(),
+        scale(0.8),
+        color(255, 255, 255),
+        "bubbleShadow",
+    ]))
     const foodCounter = add([
         text(`bulles: 0 / ${foodLeft}`),
         pos(20, 60),
         fixed(),
-        scale(0.8)
+        scale(0.8),
+        color(0, 0, 0),
     ])
 
     const foods = foodPositions.map(fp => {
@@ -538,8 +623,14 @@ scene("minigame3", () => {
     onUpdate(() => {
         if (!gameActive) return
         
-        if (isKeyDown("left"))  player.move(-MOVE_SPEED, 0)
-        if (isKeyDown("right")) player.move(MOVE_SPEED, 0)
+        if (isKeyDown("left")) {
+            player.move(-MOVE_SPEED, 0)
+            player.flipX = true
+        }
+        if (isKeyDown("right")) {
+            player.move(MOVE_SPEED, 0)
+            player.flipX = false
+        }
 
         
         if (isKeyPressed("space") || isKeyPressed("up")) {
@@ -554,7 +645,9 @@ scene("minigame3", () => {
                 destroy(food)
                 foods[i] = null
                 foodLeft--
-                foodCounter.text = `bubbles: ${foodPositions.length - foodLeft} / ${foodPositions.length}`
+                const newBubble = `bubbles: ${foodPositions.length - foodLeft} / ${foodPositions.length}`
+                foodCounter.text = newBubble
+                get("bubbleShadow").forEach(t => t.text = newBubble)
                 if (foodLeft <= 0) completeGame()
             }
         })
@@ -637,11 +730,21 @@ scene("minigame4", () => {
 
     let foodLeft = foodPositions.length
 
+    const _foodOffsets = [[-2,-2],[0,-2],[2,-2],[-2,0],[2,0],[-2,2],[0,2],[2,2]]
+    _foodOffsets.forEach(([dx, dy]) => add([
+        text(`nourriture: 0 / ${foodLeft}`),
+        pos(20 + dx, 60 + dy),
+        fixed(),
+        scale(0.8),
+        color(255, 255, 255),
+        "foodShadow",
+    ]))
     const foodCounter = add([
         text(`nourriture: 0 / ${foodLeft}`),
         pos(20, 60),
         fixed(),
-        scale(0.8)
+        scale(0.8),
+        color(0, 0, 0),
     ])
 
     const foods = foodPositions.map(fp => {
@@ -689,7 +792,9 @@ scene("minigame4", () => {
                 destroy(food)
                 foods[i] = null
                 foodLeft--
-                foodCounter.text = `food: ${foodPositions.length - foodLeft} / ${foodPositions.length}`
+                const newFood = `food: ${foodPositions.length - foodLeft} / ${foodPositions.length}`
+                foodCounter.text = newFood
+                get("foodShadow").forEach(t => t.text = newFood)
                 if (foodLeft <= 0) completeGame()
             }
         })
@@ -740,12 +845,22 @@ scene("minigame5", () => {
     const cx = width() / 2
 
     
+    const _tgtOff = [[-2,-2],[0,-2],[2,-2],[-2,0],[2,0],[-2,2],[0,2],[2,2]]
+    _tgtOff.forEach(([dx,dy]) => add([
+        text(`Arrive à ${target}°C!`),
+        pos(cx + dx, 90 + dy),
+        anchor("center"),
+        fixed(),
+        scale(0.8),
+        color(255, 255, 255),
+    ]))
     add([
         text(`Arrive à ${target}°C!`),
         pos(cx, 90),
         anchor("center"),
         fixed(),
-        scale(0.8)
+        scale(0.8),
+        color(0, 0, 0),
     ])
 
     
@@ -789,28 +904,56 @@ scene("minigame5", () => {
         color(255, 220, 0),
         fixed(),
     ])
+    const _degOff = [[-2,-2],[0,-2],[2,-2],[-2,0],[2,0],[-2,2],[0,2],[2,2]]
+    _degOff.forEach(([dx,dy]) => add([
+        text(`${target}°`, { size: 18 }),
+        pos(BAR_X + BAR_W + 18 + dx, targetY + dy),
+        anchor("left"),
+        color(255, 255, 255),
+        fixed(),
+    ]))
     add([
         text(`${target}°`, { size: 18 }),
         pos(BAR_X + BAR_W + 18, targetY),
         anchor("left"),
-        color(255, 220, 0),
+        color(0, 0, 0),
         fixed(),
     ])
 
     
+    const _tmpOff = [[-2,-2],[0,-2],[2,-2],[-2,0],[2,0],[-2,2],[0,2],[2,2]]
+    _tmpOff.forEach(([dx,dy]) => add([
+        text(`${current}°C`),
+        pos(cx + dx, BAR_TOP + BAR_H + 30 + dy),
+        anchor("center"),
+        fixed(),
+        color(255, 255, 255),
+        "tempShadow",
+    ]))
     const tempLabel = add([
         text(`${current}°C`),
         pos(cx, BAR_TOP + BAR_H + 30),
         anchor("center"),
         fixed(),
+        color(0, 0, 0),
     ])
 
     
+    const _fbOff = [[-2,-2],[0,-2],[2,-2],[-2,0],[2,0],[-2,2],[0,2],[2,2]]
+    _fbOff.forEach(([dx,dy]) => add([
+        text(""),
+        pos(cx + dx, BAR_TOP + BAR_H + 65 + dy),
+        anchor("center"),
+        fixed(),
+        color(255, 255, 255),
+        "feedbackShadow",
+    ]))
     const feedbackLabel = add([
         text(""),
         pos(cx, BAR_TOP + BAR_H + 65),
         anchor("center"),
         fixed(),
+        color(0, 0, 0),
     ])
 
     
@@ -839,11 +982,20 @@ scene("minigame5", () => {
         area(),
         fixed(),
     ])
+    const _plusOff = [[-2,-2],[0,-2],[2,-2],[-2,0],[2,0],[-2,2],[0,2],[2,2]]
+    _plusOff.forEach(([dx,dy]) => add([
+        text("+", { size: 40 }),
+        pos(cx + 80 + dx, BTN_Y - 45 + dy),
+        anchor("center"),
+        fixed(),
+        color(255, 255, 255),
+    ]))
     add([
         text("+", { size: 40 }),
         pos(cx + 80, BTN_Y - 45),
         anchor("center"),
         fixed(),
+        color(0, 0, 0),
     ])
 
     const btnMinus = add([
@@ -854,11 +1006,20 @@ scene("minigame5", () => {
         area(),
         fixed(),
     ])
+    const _minOff = [[-2,-2],[0,-2],[2,-2],[-2,0],[2,0],[-2,2],[0,2],[2,2]]
+    _minOff.forEach(([dx,dy]) => add([
+        text("-", { size: 40 }),
+        pos(cx - 30 - BAR_W + dx, BTN_Y - 45 + dy),
+        anchor("center"),
+        fixed(),
+        color(255, 255, 255),
+    ]))
     add([
         text("-", { size: 40 }),
         pos(cx - 30 - BAR_W, BTN_Y - 45),
         anchor("center"),
         fixed(),
+        color(0, 0, 0),
     ])
 
     const JELLY_SCALE = 0.12   
@@ -949,13 +1110,18 @@ scene("minigame5", () => {
 
         
         tempLabel.text = `${current}°C`
+        get("tempShadow").forEach(t => t.text = `${current}°C`)
 
         if (inRange) {
             holdTimer += dt()
-            feedbackLabel.text = `Reste-là! (${(HOLD_TIME - holdTimer).toFixed(1)}s)`
+            const fbText = `Reste-là! (${(HOLD_TIME - holdTimer).toFixed(1)}s)`
+            feedbackLabel.text = fbText
+            get("feedbackShadow").forEach(t => t.text = fbText)
         } else {
             holdTimer = 0
-            feedbackLabel.text = diff <= 10 ? "Tu t'y approche…" : current < target ? "Trop froid! ▲" : "Trop chaud! ▼"
+            const fbText = diff <= 10 ? "Tu t'en approche…" : current < target ? "Trop froid! ▲" : "Trop chaud! ▼"
+            feedbackLabel.text = fbText
+            get("feedbackShadow").forEach(t => t.text = fbText)
         }
 
         // progress bar
@@ -987,9 +1153,9 @@ scene("gameover", () => {
 
     add([
         text(`Appuyez sur "ESPACE" pour revenir au menu`),
-        pos(500, 700),
+        pos(500, 600),
         anchor("center"),
-        scale(1),
+        scale(0.8),
         color(183, 97, 232)
     ])
 
