@@ -3,6 +3,11 @@ kaplay({
     height: 825,
 })
 
+// music
+
+loadSound("music", "music/music.mp3")
+
+
 // sprites 
 
 loadSprite("bg", "assets/page1bg.png")
@@ -30,7 +35,7 @@ loadSprite("salamander", "assets/salamander.png")
 loadSprite("emptybg", "assets/Untitled_Artwork 35.png")
 
 
-
+play("music", { loop: true, volume: 2 })
 
 const GAME_DURATION = 60
 
