@@ -130,7 +130,7 @@ function randomMiniGame() {
     return chosen
 }
  
-// Popup — espace pour commencer, pas de minuterie
+// Popup, espace pour commencer, pas de minuterie
 function showInstructionPopup(minigameName, instructionText, onDone) {
     if (gameState.playedMinigames.has(minigameName)) {
         onDone()
@@ -210,7 +210,7 @@ const minigameInstructions = {
     minigame1: "Le savais-tu ? Les papillons doivent se libérer de leurs cocons pour se métamorphoser ! Clique sur le cocon pour libérer le papillon.",
     minigame2: "Le savais-tu ? Quand les bernard-l'hermites grandissent, ils doivent changer de coquille ! Utilise la souris pour amener les corps des crabes à leur coquille correspondante.",
     minigame3: "Le savais-tu ? Quand une salamandre devient adulte, ses poumons se développent en avalant de l'air. Utilise les flèches et la touche espace pour attraper toutes les bulles d'air !",
-    minigame4: "Le savais-tu ? Pour qu'un bébé coccinelle grandisse, il faut qu'il mange beaucoup, et très vite ! Utilise toute les flèches et la touche espace pour attraper la nourriture.",
+    minigame4: "Le savais-tu ? Pour qu'un bébé coccinelle grandisse, il faut qu'il mange beaucoup, et très vite ! Utilise toutes les flèches et la touche espace pour attraper la nourriture.",
     minigame5: "Le savais-tu ? Pour qu'une méduse grandisse, il faut que la température de l'eau change. Clique sur les boutons + et - pour arriver à la bonne température d'eau !",
 }
 
@@ -762,17 +762,19 @@ scene("minigame4", () => {
         gameActive = true
     })
 
+    let facingLeft = false
+
     onUpdate(() => {
         if (!gameActive) return
 
         if (isKeyDown("left")) { 
             player.move(-MOVE_SPEED, 0)
-            player.flipX = true 
+            facingLeft = true 
         }
 
         if (isKeyDown("right")) { 
             player.move(MOVE_SPEED, 0)
-            player.flipX = false 
+            facingLeft = false 
         }
 
         if (!player.isGrounded()) {
@@ -780,6 +782,8 @@ scene("minigame4", () => {
         } else {
             player.use(sprite("larvae1"))
         }
+
+        player.flipX = facingLeft
 
         if (isKeyPressed("space") || isKeyPressed("up")) {
             if (player.isGrounded()) {
