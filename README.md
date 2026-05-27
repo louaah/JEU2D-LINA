@@ -15,6 +15,10 @@ Rendez-vous sur la page itch.io du jeu et cliquez sur « Run » ou téléchargez
 Tous les assets visuels ont été créés par moi-même.
 La musique vient d'un créateur sur Pixabay; "Cyberwave-Orchestra", le son se nommant "Puzzle Game - Bright Casual Video Game Music". https://pixabay.com/music/video-games-puzzle-game-bright-casual-video-game-music-249202/
 
+## Aide
+
+J'au eu de l'aide de mon père pour de-bug le code et m'aider à faire fonctionner certaines choses (notamment le timer). 
+
 ## Recours au LLM
 
 J'ai utilisé le LLM (Claude, Sonnet 4.6) pour m'aider dans deux cas spécifiques :
